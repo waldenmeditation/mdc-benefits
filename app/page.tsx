@@ -19,7 +19,7 @@ type ReviewResponse = {
   costUsd: number | null
 }
 
-const APP_VERSION = "V1.33"
+const APP_VERSION = "V1.34"
 
 const HEADER_FLAGS = [
   ["oon_auth", "?OON? - AUTH"],
@@ -447,7 +447,7 @@ export default function Home() {
                   </ul>
                 )}
                 <div className="space-y-2">
-                  {conflict.options.map((option, optionIndex) => (
+                  {conflict.options.map((option) => (
                     <label key={option} className="flex items-center gap-2 text-sm text-gray-800">
                       <input
                         type="radio"
@@ -457,7 +457,8 @@ export default function Home() {
                         onChange={() => setChoices((current) => ({ ...current, [index]: option }))}
                       />
                       {option}
-                      {conflict.field_key === "fee_schedule" && optionIndex === 0 && (
+                      {conflict.field_key === "fee_schedule" &&
+                        option.trim().toUpperCase() === String(pendingFields?.fee_schedule ?? "").trim().toUpperCase() && (
                         <span className="rounded bg-blue-50 px-1.5 py-0.5 text-xs font-medium text-blue-700">Recommended</span>
                       )}
                     </label>
