@@ -19,7 +19,7 @@ type ReviewResponse = {
   costUsd: number | null
 }
 
-const APP_VERSION = "V1.34"
+const APP_VERSION = "V1.35"
 
 const HEADER_FLAGS = [
   ["oon_auth", "?OON? - AUTH"],
@@ -59,6 +59,9 @@ export default function Home() {
   const [primaryStatus, setPrimaryStatus] = useState("none")
   const [carrier, setCarrier] = useState("")
   const [headerFlags, setHeaderFlags] = useState<string[]>([])
+  const [groupNumberChoice, setGroupNumberChoice] = useState<"harvested" | "append" | "custom">("harvested")
+  const [groupNumberAppend, setGroupNumberAppend] = useState("")
+  const [groupNumberCustom, setGroupNumberCustom] = useState("")
   const fullInputRef = useRef<HTMLInputElement>(null)
   const basicInputRef = useRef<HTMLInputElement>(null)
 
@@ -96,6 +99,9 @@ export default function Home() {
     setPrimaryStatus("none")
     setCarrier("")
     setHeaderFlags([])
+    setGroupNumberChoice("harvested")
+    setGroupNumberAppend("")
+    setGroupNumberCustom("")
 
     const formData = new FormData()
     formData.append("passcode", passcode)
@@ -205,6 +211,30 @@ export default function Home() {
         `User selected: ${selectedValue}`,
       ].join("\n"))
     }
+
+    const harvestedGroupNumber = String(pendingFields.group_number ?? "").trim()
+    let resolvedGroupNumber = harvestedGroupNumber
+    if (groupNumberChoice === "append") {
+      const suffix = groupNumberAppend.trim()
+      if (!suffix) {
+        setErrorMsg("Please enter the text to add to the harvested group number.")
+        return
+      }
+      resolvedGroupNumber = `${harvestedGroupNumber}${suffix}`
+    } else if (groupNumberChoice === "custom") {
+      resolvedGroupNumber = groupNumberCustom.trim()
+      if (!resolvedGroupNumber) {
+        setErrorMsg("Please enter the correct group number.")
+        return
+      }
+    }
+    resolvedFields.group_number = resolvedGroupNumber
+    notes.push([
+      "Group Number Confirmation: Correct Group Number?",
+      `Harvested number: ${harvestedGroupNumber}`,
+      `User selected: ${groupNumberChoice}`,
+      `Number printed: ${resolvedGroupNumber}`,
+    ].join("\n"))
 
     setStatus("rendering")
     setErrorMsg("")
@@ -488,6 +518,65 @@ export default function Home() {
               </fieldset>
             ))}
 
+            <fieldset className="rounded-lg border border-amber-200 bg-white p-4">
+              <legend className="px-1 text-sm font-semibold text-gray-900">Group Number Confirmation</legend>
+              <p className="mb-3 text-sm text-gray-700">Correct Group Number?</p>
+              <div className="space-y-3">
+                <label className="flex items-center gap-2 text-sm text-gray-800">
+                  <input
+                    type="radio"
+                    name="group-number-choice"
+                    checked={groupNumberChoice === "harvested"}
+                    onChange={() => setGroupNumberChoice("harvested")}
+                  />
+                  Harvested number: <span className="font-semibold">{String(pendingFields?.group_number ?? "")}</span>
+                </label>
+                <div>
+                  <label className="flex items-center gap-2 text-sm text-gray-800">
+                    <input
+                      type="radio"
+                      name="group-number-choice"
+                      checked={groupNumberChoice === "append"}
+                      onChange={() => setGroupNumberChoice("append")}
+                    />
+                    Harvested Number + custom
+                  </label>
+                  {groupNumberChoice === "append" && (
+                    <div className="mt-2 flex items-center gap-2 pl-6">
+                      <span className="shrink-0 text-sm font-semibold text-gray-700">{String(pendingFields?.group_number ?? "")} +</span>
+                      <input
+                        type="text"
+                        value={groupNumberAppend}
+                        onChange={(event) => setGroupNumberAppend(event.target.value)}
+                        placeholder="Type missing portion"
+                        className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900"
+                      />
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <label className="flex items-center gap-2 text-sm text-gray-800">
+                    <input
+                      type="radio"
+                      name="group-number-choice"
+                      checked={groupNumberChoice === "custom"}
+                      onChange={() => setGroupNumberChoice("custom")}
+                    />
+                    Custom
+                  </label>
+                  {groupNumberChoice === "custom" && (
+                    <input
+                      type="text"
+                      value={groupNumberCustom}
+                      onChange={(event) => setGroupNumberCustom(event.target.value)}
+                      placeholder="Enter the complete correct group number"
+                      className="mt-2 w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900"
+                    />
+                  )}
+                </div>
+              </div>
+            </fieldset>
+
             {errorMsg && <p className="text-sm font-medium text-red-700">{errorMsg}</p>}
             <button
               type="button"
@@ -555,6 +644,9 @@ export default function Home() {
                 setPrimaryStatus("none")
                 setCarrier("")
                 setHeaderFlags([])
+                setGroupNumberChoice("harvested")
+                setGroupNumberAppend("")
+                setGroupNumberCustom("")
                 if (fullInputRef.current) fullInputRef.current.value = ""
                 if (basicInputRef.current) basicInputRef.current.value = ""
               }}
